@@ -12,6 +12,7 @@ module Phoenix.Socket
         , onClose
         , onAbnormalClose
         , onNormalClose
+        , onChannelStatus
         , map
         )
 
@@ -25,6 +26,8 @@ module Phoenix.Socket
 -}
 
 import Time exposing (Time)
+import Phoenix.Channel as Channel
+import Phoenix.Internal.Helpers exposing ((<<<))
 
 
 {-| Representation of a Socket connection
@@ -50,6 +53,7 @@ type alias PhoenixSocket msg =
     , onClose : Maybe ({ code : Int, reason : String, wasClean : Bool } -> msg)
     , onAbnormalClose : Maybe (AbnormalClose -> msg)
     , onNormalClose : Maybe msg
+    , onChannelStatus : Maybe (String -> Channel.State -> msg)
     }
 
 
@@ -69,6 +73,7 @@ init endpoint =
     , onClose = Nothing
     , onAbnormalClose = Nothing
     , onNormalClose = Nothing
+    , onChannelStatus = Nothing
     }
 
 
@@ -157,6 +162,11 @@ onClose onClose_ socket =
     { socket | onClose = Just onClose_ }
 
 
+onChannelStatus : (String -> Channel.State -> msg) -> Socket msg -> Socket msg
+onChannelStatus onChannelStatus_ socket =
+    { socket | onChannelStatus = Just onChannelStatus_ }
+
+
 defaultReconnectTimer : Int -> Time
 defaultReconnectTimer failedAttempts =
     if failedAttempts < 1 then
@@ -174,4 +184,5 @@ map func socket =
         , onClose = Maybe.map ((<<) func) socket.onClose
         , onNormalClose = Maybe.map func socket.onNormalClose
         , onAbnormalClose = Maybe.map ((<<) func) socket.onAbnormalClose
+        , onChannelStatus = Maybe.map ((<<<) func) socket.onChannelStatus
     }

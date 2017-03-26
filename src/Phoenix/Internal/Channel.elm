@@ -57,6 +57,23 @@ leaveMessage { channel } =
     Message.init channel.topic "phx_leave"
 
 
+dictStatusDiff previous next =
+    let
+        removedStep topic previous changed =
+            ( topic, Disconnected ) :: changed
+
+        retainedStep topic previous next changed =
+            if previous.state /= next.state then
+                ( topic, next.state ) :: changed
+            else
+                changed
+
+        addedStep topic next changed =
+            ( topic, next.state ) :: changed
+    in
+        Dict.merge removedStep retainedStep addedStep previous next []
+
+
 
 -- GETTER, SETTER, UPDATER
 
@@ -89,7 +106,7 @@ insertState endpoint topic state dict =
 
 updateState : State -> InternalChannel msg -> InternalChannel msg
 updateState state internalChannel =
-    if internalChannel.channel.debug then
+    if Debug.log "Channel.updateState" internalChannel.channel.debug then
         let
             _ =
                 case ( state, internalChannel.state ) of

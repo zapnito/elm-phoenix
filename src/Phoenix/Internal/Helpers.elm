@@ -112,3 +112,13 @@ statusInfo status =
 (<&>) : Task b a -> (a -> Task b c) -> Task b c
 (<&>) x f =
     Task.andThen f x
+
+
+(>>>) : (a -> b -> c) -> (c -> d) -> a -> b -> d
+(>>>) ff f x y =
+    ff x y |> f
+
+
+(<<<) : (c -> d) -> (a -> b -> c) -> a -> b -> d
+(<<<) =
+    flip (>>>)

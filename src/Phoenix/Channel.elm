@@ -14,6 +14,7 @@ module Phoenix.Channel
         , onLeaveError
         , withDebug
         , map
+        , State(..)
         )
 
 {-| A channel declares which topic should be joined, registers event handlers and has various callbacks for possible lifecycle events.
@@ -31,6 +32,14 @@ import Json.Decode as Decode exposing (Value)
 
 
 -- CHANNEL
+
+
+type State
+    = Closed
+    | Joining
+    | Joined
+    | Errored
+    | Disconnected
 
 
 {-| Representation of a Phoenix Channel

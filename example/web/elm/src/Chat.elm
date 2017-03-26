@@ -10,6 +10,7 @@ import Phoenix.Channel as Channel exposing (Channel)
 import Phoenix.Socket as Socket exposing (Socket, AbnormalClose)
 import Phoenix.Push as Push
 import Time exposing (Time)
+import Dict exposing (Dict)
 
 
 main : Program Never Model Msg
@@ -35,6 +36,7 @@ type alias Model =
     , composedMessage : String
     , accessToken : Int
     , connectionStatus : ConnectionStatus
+    , channelStatuses : Dict String Channel.State
     , currentTime : Time
     }
 
@@ -68,6 +70,7 @@ initModel =
     , composedMessage = ""
     , accessToken = 1
     , connectionStatus = Disconnected
+    , channelStatuses = Dict.empty
     , currentTime = 0
     }
 
@@ -94,6 +97,7 @@ type Msg
     | SendComposedMessage
     | SocketClosedAbnormally AbnormalClose
     | ConnectionStatusChanged ConnectionStatus
+    | ChannelStatusUpdated String Channel.State
     | Tick Time
 
 
@@ -160,6 +164,9 @@ update message model =
             }
                 ! []
 
+        ChannelStatusUpdated topic status ->
+            model ! []
+
         ConnectionStatusChanged connectionStatus ->
             { model | connectionStatus = connectionStatus } ! []
 
@@ -213,6 +220,7 @@ socket accessToken =
         |> Socket.onOpen (ConnectionStatusChanged Connected)
         |> Socket.onClose (\_ -> ConnectionStatusChanged Disconnected)
         |> Socket.onAbnormalClose SocketClosedAbnormally
+        |> Socket.onChannelStatus ChannelStatusUpdated
         |> Socket.reconnectTimer (\backoffIteration -> (backoffIteration + 1) * 5000 |> toFloat)
 
 
